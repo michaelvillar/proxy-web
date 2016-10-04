@@ -1,0 +1,21 @@
+{
+  "name": "web-proxy",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "babel src -d lib",
+    "build:watch": "babel --watch src -d lib"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.0.0",
+    "babel-plugin-syntax-async-functions": "^6.13.0",
+    "babel-plugin-transform-regenerator": "^6.16.1",
+    "babel-polyfill": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0"
+  },
+  "dependencies": {
+    "express": "^4.14.0",
+    "htmlparser2": "^3.9.1",
+    "request": "^2.75.0",
+    "request-promise-native": "^1.0.3",
+  }
+}
