@@ -38,6 +38,7 @@ class ProxyResource {
     } catch (e) {
       console.error('Error ', e.statusCode, ' for ', this.url);
       this.res.status(e.statusCode)
+              .set(e.response.headers)
               .send('Not found');
       return;
     }
