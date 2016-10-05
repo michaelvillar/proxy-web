@@ -1,4 +1,4 @@
-import url from 'url';
+import toolsUrl from 'url';
 import request from 'request-promise-native';
 import htmlparser from 'htmlparser2';
 import {PORT, HOST} from './constants';
@@ -11,7 +11,7 @@ class ProxyResource {
     this.res = res;
 
     this.url = req.query.url;
-    this.parsedUrl = url.parse(this.url);
+    this.parsedUrl = toolsUrl.parse(this.url);
   }
 
   async load() {
@@ -20,7 +20,10 @@ class ProxyResource {
       uri: this.url,
       resolveWithFullResponse: true,
       encoding: null,
-    })
+      headers: {
+        Referer: this.url,
+      },
+    });
   }
 
   async proxy() {
@@ -65,17 +68,19 @@ class ProxyResource {
           urls.push(src);
         }
       },
-    }, {decodeEntities: true});
+    }, {decodeEntities: false});
     parser.write(body);
     parser.end();
 
+    console.log(urls);
+
     for (var i = 0; i < urls.length; i++) {
-      const anUrl = urls[i];
-      if (anUrl.indexOf('#') === 0) {
+      const url = urls[i];
+      if (url.indexOf('#') === 0) {
         continue;
       }
 
-      output = output.replace(anUrl, this.resolveURL(anUrl));
+      output = output.replace(url, this.resolveURL(url));
     }
 
     return output;
@@ -88,21 +93,22 @@ class ProxyResource {
         return `url(${$0})`;
       }
 
-      let href = $0.replace(/^"|'/, '');
-      href = href.replace(/"|'$/, '');
-      return `url(${this.resolveURL(href)})`;
+      let url = $0.replace(/^"|'/, '');
+      url = url.replace(/"|'$/, '');
+      return `url(${this.resolveURL(url)})`;
     });
     return output;
   }
 
-  resolveURL(href) {
+  resolveURL(url) {
     let resolved;
-    if (href.indexOf('//') === 0) {
-      resolved = `${this.parsedUrl.protocol}${href}`;
+    if (url.indexOf('//') === 0) {
+      resolved = `${this.parsedUrl.protocol}${url}`;
     } else {
-      resolved = url.resolve(this.url, href);
+      resolved = toolsUrl.resolve(this.url, url);
     }
     return `${PROXY_URL}${encodeURIComponent(resolved)}`;
   }
 }
+
 export default ProxyResource;
