@@ -1,6 +1,8 @@
 import toolsUrl from 'url';
 import request from 'request-promise-native';
 import htmlparser from 'htmlparser2';
+import _ from 'lodash';
+import ent from 'ent';
 import {PORT, HOST} from './constants';
 
 const PROXY_URL = `${HOST}/proxy?url=`;
@@ -12,17 +14,20 @@ class ProxyResource {
 
     this.url = req.query.url;
     this.parsedUrl = toolsUrl.parse(this.url);
+    this.host = `${this.parsedUrl.protocol}//${this.parsedUrl.host}`;
   }
 
   async load() {
+    let headers = this.req.headers;
+    headers.host = this.parsedUrl.host;
+    headers.referer = `${this.host}/`;
+    delete headers['accept-encoding'];
     return request({
-      method: 'GET',
+      method: this.req.method,
       uri: this.url,
       resolveWithFullResponse: true,
       encoding: null,
-      headers: {
-        Referer: this.url,
-      },
+      headers: headers,
     });
   }
 
@@ -72,15 +77,13 @@ class ProxyResource {
     parser.write(body);
     parser.end();
 
-    console.log(urls);
-
     for (var i = 0; i < urls.length; i++) {
       const url = urls[i];
       if (url.indexOf('#') === 0) {
         continue;
       }
 
-      output = output.replace(url, this.resolveURL(url));
+      output = output.replace(url, this.resolveURL(ent.decode(url)));
     }
 
     return output;

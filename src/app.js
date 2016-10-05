@@ -5,7 +5,7 @@ import {PORT} from './constants';
 
 const app = express();
 
-app.get('/proxy', (req, res) => {
+const proxyRoute = (req, res) => {
   try {
     const resource = new ProxyResource(req, res)
     console.log('Proxying', resource.url);
@@ -13,7 +13,12 @@ app.get('/proxy', (req, res) => {
   } catch (e) {
     console.error(e.stack);
   }
-});
+};
+
+app.get('/proxy', proxyRoute);
+app.post('/proxy', proxyRoute);
+app.put('/proxy', proxyRoute);
+app.delete('/proxy', proxyRoute);
 
 app.listen(PORT, () => {
   console.log(`Listening on ${PORT}`);
