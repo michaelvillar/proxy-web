@@ -61,22 +61,28 @@ class ProxyResource {
   parseHTML(body) {
     let output = '' + body;
     let urls = [];
+    const urlAttrs = ['href', 'src'];
 
     const parser = new htmlparser.Parser({
       onopentag: (name, attrs) => {
-        const href = attrs.href;
-        if (href) {
-          urls.push(href);
-        }
-
-        const src = attrs.src;
-        if (src) {
-          urls.push(src);
+        for (var i = 0; i < urlAttrs.length; i++) {
+          const attr = urlAttrs[i];
+          if (attrs[attr]) {
+            urls.push(attrs[attr]);
+          }
         }
       },
     }, {decodeEntities: false});
     parser.write(body);
     parser.end();
+
+    const matches = [];
+    for (var i = 0; i < urlAttrs.length; i++) {
+      const attr = urlAttrs[i];
+      matches.push(`${attr}="$0"`);
+      matches.push(`${attr}='$0'`);
+      matches.push(`${attr}=$0`);
+    }
 
     for (var i = 0; i < urls.length; i++) {
       const url = urls[i];
@@ -84,7 +90,12 @@ class ProxyResource {
         continue;
       }
 
-      output = output.replace(url, this.resolveURL(ent.decode(url)));
+      const newUrl = this.resolveURL(ent.decode(url));
+
+      for (var j = 0; j < matches.length; j++) {
+        const match = matches[j];
+        output = output.replace(match.replace('$0', url), match.replace('$0', newUrl));
+      }
     }
 
     return output;
