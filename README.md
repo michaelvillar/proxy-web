@@ -5,7 +5,7 @@ Proxy-web is a proxy that will proxy websites in your browser. It'll proxy all r
 ## Example with express
 
 ```
-import proxyWeb from 'proxyWeb';
+import proxyWeb from 'proxy-web';
 import express from 'express';
 
 const app = express();
