@@ -1,4 +1,3 @@
-import 'babel-polyfill';
 import express from 'express';
 import proxyWeb from './proxy_web';
 

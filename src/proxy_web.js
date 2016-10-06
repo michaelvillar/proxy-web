@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import ProxyResource from './proxy_resource';
 
 const proxyWeb = (req, options) => {
