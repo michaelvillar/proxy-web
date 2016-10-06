@@ -1,15 +1,24 @@
 import 'babel-polyfill';
 import express from 'express';
-import ProxyResource from './proxy_resource';
-import {PORT} from './constants';
+import proxyWeb from './proxy_web';
 
+const PORT = 3000;
 const app = express();
 
 const proxyRoute = (req, res) => {
   try {
-    const resource = new ProxyResource(req, res)
-    console.log('Proxying', resource.url);
-    resource.proxy();
+    console.log('Proxying', req.query.url);
+    proxyWeb({
+      url: req.query.url,
+      method: req.method,
+      headers: req.headers,
+    }, {
+      proxyUrl: `http://localhost:${PORT}/proxy?url=`,
+    }).then((output) => {
+      res.status(output.statusCode)
+         .set(output.headers)
+         .send(output.body);
+    });
   } catch (e) {
     console.error(e.stack);
   }

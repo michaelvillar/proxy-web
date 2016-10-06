@@ -1,10 +1,15 @@
 {
-  "name": "web-proxy",
+  "name": "proxy-web",
   "version": "0.0.1",
   "scripts": {
     "build": "babel src -d lib",
-    "build:watch": "babel --watch src -d lib"
+    "build:watch": "babel --watch src -d lib",
+    "prepublish": "npm run build"
   },
+  "bugs": {
+    "url": "https://github.com/michaelvillar/proxy-web/issues"
+  },
+  "main": "lib/proxy_web.js",
   "devDependencies": {
     "babel-cli": "^6.0.0",
     "babel-plugin-syntax-async-functions": "^6.13.0",
@@ -19,5 +24,10 @@
     "lodash": "^4.16.3",
     "request": "^2.75.0",
     "request-promise-native": "^1.0.3"
-  }
+  },
+  "keywords": [
+    "proxy",
+    "web"
+  ],
+  "license": "MIT"
 }

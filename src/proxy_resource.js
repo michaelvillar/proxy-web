@@ -3,16 +3,13 @@ import request from 'request-promise-native';
 import htmlparser from 'htmlparser2';
 import _ from 'lodash';
 import ent from 'ent';
-import {PORT, HOST} from './constants';
-
-const PROXY_URL = `${HOST}/proxy?url=`;
 
 class ProxyResource {
-  constructor(req, res) {
+  constructor(req, options) {
     this.req = req;
-    this.res = res;
+    this.proxyURL = options.proxyUrl;
 
-    this.url = req.query.url;
+    this.url = req.url;
     this.parsedUrl = toolsUrl.parse(this.url);
     this.host = `${this.parsedUrl.protocol}//${this.parsedUrl.host}`;
   }
@@ -32,20 +29,29 @@ class ProxyResource {
   }
 
   async proxy() {
-    let response;
-    try {
-      response = await this.load();
-    } catch (e) {
-      console.error('Error ', e.statusCode, ' for ', this.url);
-      this.res.status(e.statusCode)
-              .set(e.response.headers)
-              .send('Not found');
-      return;
-    }
+    return new Promise(async (resolve, reject) => {
+      let response;
+      try {
+        response = await this.load();
+      } catch (e) {
+        resolve({
+          statusCode: e.statusCode,
+          headers: this.filterResponseHeaders(e.response.headers),
+          body: this.parse(e.response),
+        });
+        return;
+      }
 
-    const output = this.parse(response);
-    this.res.set(response.headers);
-    this.res.send(output);
+      resolve({
+        statusCode: response.statusCode,
+        headers: this.filterResponseHeaders(response.headers),
+        body: this.parse(response),
+      });
+    });
+  }
+
+  filterResponseHeaders(headers) {
+    return _.omit(headers, 'x-frame-options');
   }
 
   parse(response) {
@@ -122,7 +128,7 @@ class ProxyResource {
     } else {
       resolved = toolsUrl.resolve(this.url, url);
     }
-    return `${PROXY_URL}${encodeURIComponent(resolved)}`;
+    return `${this.proxyURL}${encodeURIComponent(resolved)}`;
   }
 }
 
