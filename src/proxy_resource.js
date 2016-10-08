@@ -34,12 +34,16 @@ class ProxyResource {
       try {
         response = await this.load();
       } catch (e) {
-        resolve({
+        if (e.error) {
+          return resolve({
+            statusCode: 500,
+          });
+        }
+        return resolve({
           statusCode: e.statusCode,
           headers: this.filterResponseHeaders(e.response.headers),
           body: this.parse(e.response),
         });
-        return;
       }
 
       resolve({
