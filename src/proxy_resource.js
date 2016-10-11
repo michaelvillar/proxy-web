@@ -34,7 +34,8 @@ class ProxyResource {
       try {
         response = await this.load();
       } catch (e) {
-        if (e.error) {
+        if (e.error && !e.statusCode) {
+          console.error('Error', e.error.toString ? e.error.toString('utf8') : e.error);
           return resolve({
             statusCode: 500,
           });
