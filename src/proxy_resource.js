@@ -3,6 +3,7 @@ import request from 'request-promise-native';
 import htmlparser from 'htmlparser2';
 import _ from 'lodash';
 import ent from 'ent';
+import zlib from 'zlib';
 
 class ProxyResource {
   constructor(req, options) {
@@ -24,7 +25,9 @@ class ProxyResource {
       uri: this.url,
       resolveWithFullResponse: true,
       encoding: null,
+      gzip: true,
       headers: headers,
+      timeout: 2000,
     });
   }
 
@@ -35,16 +38,21 @@ class ProxyResource {
         response = await this.load();
       } catch (e) {
         if (e.error && !e.statusCode) {
-          console.error('Error', e.error.toString ? e.error.toString('utf8') : e.error);
-          return resolve({
-            statusCode: 500,
-          });
+          console.error(e.error.toString ? e.error.toString('utf8') : e.error);
         }
-        return resolve({
-          statusCode: e.statusCode,
-          headers: this.filterResponseHeaders(e.response.headers),
-          body: this.parse(e.response),
-        });
+
+        let output = {
+          statusCode: e.statusCode || 500,
+        };
+        if (e.response) {
+          output = {
+            ...output,
+            headers: this.filterResponseHeaders(e.response.headers),
+            body: this.parse(e.response),
+          };
+        }
+
+        return resolve(output);
       }
 
       resolve({
@@ -56,11 +64,11 @@ class ProxyResource {
   }
 
   filterResponseHeaders(headers) {
-    return _.omit(headers, 'x-frame-options');
+    return _.omit(headers, 'x-frame-options', 'content-encoding');
   }
 
   parse(response) {
-    const contentType = response.headers['content-type'];
+    const contentType = response.headers['content-type'] || '';
     if (contentType.includes('text/html')) {
       return this.parseHTML(response.body.toString());
     } else if (contentType.includes('text/css')) {
