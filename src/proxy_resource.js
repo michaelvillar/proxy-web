@@ -105,7 +105,7 @@ class ProxyResource {
 
     for (var i = 0; i < urls.length; i++) {
       const url = urls[i];
-      if (url.indexOf('#') === 0) {
+      if (url.indexOf('#') === 0 || url.indexOf('data:') === 0) {
         continue;
       }
 
@@ -123,12 +123,13 @@ class ProxyResource {
   parseCSS(body) {
     let output = '' + body;
     output = output.replace(/url\((.*?)\)/ig, (match, $0) => {
-      if ($0.indexOf('data:') === 0) {
+      let url = $0.trim().replace(/^"|'/, '');
+      url = url.replace(/"|'$/, '');
+
+      if (url.indexOf('data:') === 0) {
         return `url(${$0})`;
       }
 
-      let url = $0.replace(/^"|'/, '');
-      url = url.replace(/"|'$/, '');
       return `url(${this.resolveURL(url)})`;
     });
     return output;
