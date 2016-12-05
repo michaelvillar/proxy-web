@@ -5,6 +5,8 @@ import _ from 'lodash';
 import ent from 'ent';
 import zlib from 'zlib';
 
+const NOT_PROXIED_SCHEMES = ['#', 'data:', 'about:'];
+
 class ProxyResource {
   constructor(req, options) {
     this.req = req;
@@ -84,10 +86,9 @@ class ProxyResource {
 
     const parser = new htmlparser.Parser({
       onopentag: (name, attrs) => {
-        for (var i = 0; i < urlAttrs.length; i++) {
-          const attr = urlAttrs[i];
-          if (attrs[attr]) {
-            urls.push(attrs[attr]);
+        for (const urlAttr of urlAttrs) {
+          if (attrs[urlAttr]) {
+            urls.push(attrs[urlAttr].trim());
           }
         }
       },
@@ -96,23 +97,28 @@ class ProxyResource {
     parser.end();
 
     const matches = [];
-    for (var i = 0; i < urlAttrs.length; i++) {
-      const attr = urlAttrs[i];
-      matches.push(`${attr}="$0"`);
-      matches.push(`${attr}='$0'`);
-      matches.push(`${attr}=$0`);
+    for (const urlAttr of urlAttrs) {
+      matches.push(`${urlAttr}="$0"`);
+      matches.push(`${urlAttr}='$0'`);
+      matches.push(`${urlAttr}=$0`);
     }
 
-    for (var i = 0; i < urls.length; i++) {
-      const url = urls[i];
-      if (url.indexOf('#') === 0 || url.indexOf('data:') === 0) {
+    for (const url of urls) {
+      let continueLoop;
+      for (const scheme of NOT_PROXIED_SCHEMES) {
+        if (url.indexOf(scheme) === 0) {
+          continueLoop = true;
+          break;
+        }
+      }
+
+      if (continueLoop) {
         continue;
       }
 
       const newUrl = this.resolveURL(ent.decode(url));
 
-      for (var j = 0; j < matches.length; j++) {
-        const match = matches[j];
+      for (const match of matches) {
         output = output.replace(match.replace('$0', url), match.replace('$0', newUrl));
       }
     }
