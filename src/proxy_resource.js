@@ -4,6 +4,8 @@ import htmlparser from 'htmlparser2';
 import _ from 'lodash';
 import ent from 'ent';
 import zlib from 'zlib';
+import escapeStringRegexp from 'escape-string-regexp';
+import fs from 'fs';
 
 const NOT_PROXIED_SCHEMES = ['#', 'data:', 'about:'];
 
@@ -119,9 +121,20 @@ class ProxyResource {
       const newUrl = this.resolveURL(ent.decode(url));
 
       for (const match of matches) {
-        output = output.replace(match.replace('$0', url), match.replace('$0', newUrl));
+        const regexp = new RegExp(escapeStringRegexp(match.replace('$0', url)), 'g');
+        output = output.replace(regexp, match.replace('$0', newUrl));
       }
     }
+
+    let proxyXHR = fs.readFileSync(`${__dirname}/proxy_xhr.js`).toString();
+    proxyXHR = proxyXHR.replace('$0', this.resolveURL('/'));
+    proxyXHR = proxyXHR.replace("'use strict';", '');
+    output = `
+    <script>
+    ${proxyXHR}
+    </script>
+    ${output}
+    `;
 
     return output;
   }
